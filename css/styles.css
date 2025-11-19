@@ -290,6 +290,63 @@ body {
     color: var(--accent-red);
 }
 
+.synth-controls {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+}
+
+.synth-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.synth-control {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.synth-control label {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-tertiary);
+}
+
+.synth-control input[type="range"],
+.synth-control select {
+    width: 100%;
+}
+
+.lfo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.lfo-block {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.lfo-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--accent-green);
+}
+
 /* Steps Grid */
 .steps-grid {
     display: grid;
@@ -302,6 +359,35 @@ body {
     flex-direction: column;
     gap: 3px;
     position: relative;
+}
+
+.synth-step {
+    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.synth-note-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-tertiary);
+}
+
+.synth-note-control label {
+    font-size: 9px;
+}
+
+.note-knob {
+    flex: 1;
+}
+
+.note-label {
+    font-size: 11px;
+    color: var(--accent-gold);
 }
 
 .step-container:nth-child(4n+1) .step {

@@ -30,7 +30,18 @@ export const state = {
     tracks: {}
 };
 
-export function initializeTrack(trackId, name, engine) {
+function createDefaultLFO() {
+    return {
+        destination: 'none',
+        wave: 'sine',
+        depth: 0,
+        rate: 0.5
+    };
+}
+
+export function initializeTrack(trackId, name, engine, options = {}) {
+    const maxSteps = options.maxSteps || 16;
+
     const track = {
         id: trackId,
         name: name,
@@ -55,20 +66,39 @@ export function initializeTrack(trackId, name, engine) {
         normalState: null,
         morphAmount: 0,
         targetParams: null,
-        steps: Array(16).fill(false),
-        velocities: Array(16).fill(0.8),
-        stepConditions: Array(16).fill('1:1'),
-        stepLocks: Array(16).fill(null),
-        stepSlides: Array(16).fill(false)
+        steps: Array(maxSteps).fill(false),
+        velocities: Array(maxSteps).fill(0.8),
+        stepConditions: Array(maxSteps).fill('1:1'),
+        stepLocks: Array(maxSteps).fill(null),
+        stepSlides: Array(maxSteps).fill(false),
+        maxSteps,
+        stepCount: Math.min(options.stepCount || maxSteps, maxSteps),
+        rateMultiplier: 1,
+        isSynth: options.type === 'synth',
+        noteIndices: Array(maxSteps).fill(0),
+        rootNote: 60,
+        scale: 'ionian',
+        rangeStart: 48,
+        rangeSpan: 24,
+        transpose: 0,
+        lfos: [createDefaultLFO(), createDefaultLFO(), createDefaultLFO()],
+        synthState: {
+            accumulator: 0,
+            stepIndex: -1
+        }
     };
-    
+
     // Initialize normal state
     track.normalState = {
         engine: engine,
         params: { ...track.params },
         fx: { ...track.fx }
     };
-    
+
+    if (!track.isSynth) {
+        track.stepCount = track.maxSteps;
+    }
+
     state.tracks[trackId] = track;
     return track;
 }
@@ -292,6 +322,8 @@ export function initializeTracks() {
     initializeTrack('tom', 'TOM', 'plaits_modal');
     initializeTrack('perc', 'PERC', 'plaits_fm');
     initializeTrack('cymbal', 'CYMBAL', 'plaits_noise');
+    initializeTrack('bass', 'BASS', 'plaits_va', { type: 'synth', maxSteps: 32, stepCount: 16 });
+    initializeTrack('lead', 'LEAD', 'plaits_va', { type: 'synth', maxSteps: 32, stepCount: 16 });
 }
 
 // Save/Load state functions
@@ -316,7 +348,18 @@ export function saveCompleteState() {
                         fx: { ...track.normalState.fx }
                     } : null,
                     morphAmount: track.morphAmount,
-                    targetParams: track.targetParams
+                    targetParams: track.targetParams,
+                    synthSettings: track.isSynth ? {
+                        stepCount: track.stepCount,
+                        rateMultiplier: track.rateMultiplier,
+                        rootNote: track.rootNote,
+                        scale: track.scale,
+                        rangeStart: track.rangeStart,
+                        rangeSpan: track.rangeSpan,
+                        transpose: track.transpose,
+                        noteIndices: [...track.noteIndices],
+                        lfos: track.lfos.map(lfo => ({ ...lfo }))
+                    } : null
                 }
             ])
         )
@@ -347,6 +390,23 @@ export function loadCompleteState(data) {
             } : null;
             track.morphAmount = trackData.morphAmount || 0;
             track.targetParams = trackData.targetParams || null;
+
+            if (track.isSynth && trackData.synthSettings) {
+                const synthSettings = trackData.synthSettings;
+                track.stepCount = synthSettings.stepCount || track.stepCount;
+                track.rateMultiplier = synthSettings.rateMultiplier || track.rateMultiplier;
+                track.rootNote = synthSettings.rootNote ?? track.rootNote;
+                track.scale = synthSettings.scale || track.scale;
+                track.rangeStart = synthSettings.rangeStart ?? track.rangeStart;
+                track.rangeSpan = synthSettings.rangeSpan || track.rangeSpan;
+                track.transpose = synthSettings.transpose ?? track.transpose;
+                if (Array.isArray(synthSettings.noteIndices)) {
+                    track.noteIndices = [...synthSettings.noteIndices];
+                }
+                if (Array.isArray(synthSettings.lfos)) {
+                    track.lfos = synthSettings.lfos.map(lfo => ({ ...lfo }));
+                }
+            }
         }
     });
 }

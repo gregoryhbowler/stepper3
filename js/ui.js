@@ -3,6 +3,14 @@
 import { state, getSelectedTrack, setSelectedTrack } from './state-woscillators.js';
 import { ENGINE_SPECS, FX_SPECS } from './audio-engine-woscillators.js';
 import { startSequencer, stopSequencer, resetSequencer, updateTempo } from './sequencer.js';
+import {
+    NOTE_OPTIONS,
+    SCALE_DEFINITIONS,
+    getScaleNotes,
+    midiToNoteName,
+    SEQUENCER_RATES,
+    LFO_WAVES
+} from './music-utils.js';
 
 export let audioEngine = null;
 export let patternBank = null;
@@ -15,6 +23,14 @@ let dragState = {
     startVelocity: 0,
     wasActive: false
 };
+
+const NOTE_MAX_INDEX = NOTE_OPTIONS.length - 1;
+const RANGE_MAX_INDEX = Math.max(0, NOTE_OPTIONS.length - 24);
+
+function getScaleNoteList(track) {
+    const rangeEnd = track.rangeStart + track.rangeSpan - 1;
+    return getScaleNotes(track.rootNote, track.scale, track.rangeStart, rangeEnd);
+}
 
 export function setAudioEngine(engine) {
     audioEngine = engine;
@@ -119,8 +135,9 @@ export function renderTracks() {
                         <button class="track-btn" data-track="${track.id}" data-action="clear">[C]</button>
                     </div>
                 </div>
-                <div class="steps-grid" data-track="${track.id}">
-                    ${generateStepsHTML(track)}
+                ${track.isSynth ? generateSynthControls(track) : ''}
+                <div class="steps-grid" data-track="${track.id}" style="${track.isSynth ? `grid-template-columns: repeat(${track.stepCount}, minmax(28px, 1fr));` : ''}">
+                    ${generateTrackStepsHTML(track)}
                 </div>
             </div>
         `).join('');
@@ -148,8 +165,9 @@ export function forceRenderTracks() {
                     <button class="track-btn" data-track="${track.id}" data-action="clear">[C]</button>
                 </div>
             </div>
-            <div class="steps-grid" data-track="${track.id}">
-                ${generateStepsHTML(track)}
+            ${track.isSynth ? generateSynthControls(track) : ''}
+            <div class="steps-grid" data-track="${track.id}" style="${track.isSynth ? `grid-template-columns: repeat(${track.stepCount}, minmax(28px, 1fr));` : ''}">
+                ${generateTrackStepsHTML(track)}
             </div>
         </div>
     `).join('');
@@ -190,75 +208,98 @@ function updateTrackVisuals() {
         // Update steps
         const stepsGrid = trackElement.querySelector('.steps-grid');
         if (stepsGrid) {
-            track.steps.forEach((isActive, i) => {
-                const stepContainers = stepsGrid.querySelectorAll('.step-container');
-                if (stepContainers[i]) {
-                    const step = stepContainers[i].querySelector('.step');
-                    const velocityBar = stepContainers[i].querySelector('.velocity-bar');
-                    const velocityDisplay = stepContainers[i].querySelector('.velocity-display');
-                    const pLock = stepContainers[i].querySelector('.lock-btn.plock');
-                    const slide = stepContainers[i].querySelector('.lock-btn.slide');
-                    const conditionLabel = stepContainers[i].querySelector('.condition-label');
-                    
-                    if (step) {
-                        // Update step classes
-                        const isPlaying = state.isPlaying && state.currentStep === i;
-                        const hasP = track.stepLocks[i] !== null;
-                        
-                        step.className = 'step';
-                        if (isActive) step.classList.add('active');
-                        if (isPlaying) step.classList.add('playing');
-                        if (hasP) step.classList.add('has-locks');
-                        
-                        // Update velocity
-                        if (velocityBar) {
-                            velocityBar.style.height = `${track.velocities[i] * 100}%`;
-                        }
-                        if (velocityDisplay) {
-                            velocityDisplay.textContent = Math.round(track.velocities[i] * 100);
-                        }
+            const totalSteps = track.stepCount || track.steps.length;
+            const scaleNotes = track.isSynth ? getScaleNoteList(track) : null;
+            const maxIndex = track.isSynth ? Math.max(scaleNotes.length - 1, 0) : 0;
+            const stepContainers = stepsGrid.querySelectorAll('.step-container');
+
+            for (let i = 0; i < totalSteps; i++) {
+                const container = stepContainers[i];
+                if (!container) continue;
+
+                const step = container.querySelector('.step');
+                const velocityBar = container.querySelector('.velocity-bar');
+                const velocityDisplay = container.querySelector('.velocity-display');
+                const pLock = container.querySelector('.lock-btn.plock');
+                const slide = container.querySelector('.lock-btn.slide');
+                const conditionLabel = container.querySelector('.condition-label');
+                const isPlaying = track.isSynth
+                    ? track.synthState?.stepIndex === i && track.synthState?.isPlaying
+                    : state.isPlaying && state.currentStep === i;
+
+                if (step) {
+                    step.className = 'step';
+                    if (track.steps[i]) step.classList.add('active');
+                    if (isPlaying) step.classList.add('playing');
+                    if (track.stepLocks[i]) step.classList.add('has-locks');
+                }
+
+                if (velocityBar) {
+                    velocityBar.style.height = `${track.velocities[i] * 100}%`;
+                }
+                if (velocityDisplay) {
+                    velocityDisplay.textContent = Math.round(track.velocities[i] * 100);
+                }
+
+                if (track.isSynth) {
+                    const noteKnob = container.querySelector('.note-knob');
+                    const noteLabel = container.querySelector('.note-label');
+                    const noteIndex = Math.min(track.noteIndices[i] || 0, maxIndex);
+                    if (noteKnob) {
+                        noteKnob.value = noteIndex;
+                        noteKnob.max = Math.max(maxIndex, 0);
                     }
-                    
-                    // Update locks
-                    if (pLock) {
-                        if (track.stepLocks[i]) {
-                            pLock.classList.add('active');
-                        } else {
-                            pLock.classList.remove('active');
-                        }
-                    }
-                    if (slide) {
-                        if (track.stepSlides[i]) {
-                            slide.classList.add('active');
-                        } else {
-                            slide.classList.remove('active');
-                        }
-                    }
-                    
-                    // Update condition
-                    if (conditionLabel) {
-                        conditionLabel.textContent = track.stepConditions[i];
+                    if (noteLabel) {
+                        const noteValue = scaleNotes[noteIndex] ?? track.rootNote;
+                        noteLabel.textContent = midiToNoteName(noteValue);
                     }
                 }
-            });
+
+                if (pLock) {
+                    if (track.stepLocks[i]) {
+                        pLock.classList.add('active');
+                    } else {
+                        pLock.classList.remove('active');
+                    }
+                }
+                if (slide) {
+                    if (track.stepSlides[i]) {
+                        slide.classList.add('active');
+                    } else {
+                        slide.classList.remove('active');
+                    }
+                }
+
+                if (conditionLabel) {
+                    conditionLabel.textContent = track.stepConditions[i];
+                }
+            }
         }
     });
 }
 
-function generateStepsHTML(track) {
-    return Array(16).fill(0).map((_, i) => {
+function generateTrackStepsHTML(track) {
+    if (track.isSynth) {
+        return generateSynthStepsHTML(track);
+    }
+    return generateDrumStepsHTML(track);
+}
+
+function generateDrumStepsHTML(track) {
+    const totalSteps = track.stepCount || track.steps.length;
+    return Array.from({ length: totalSteps }).map((_, i) => {
         const isActive = track.steps[i];
         const velocity = track.velocities[i];
         const condition = track.stepConditions[i];
         const hasP = track.stepLocks[i] !== null;
         const hasS = track.stepSlides[i];
         const isPlaying = state.isPlaying && state.currentStep === i;
-        
+
         let stepClass = 'step';
         if (isActive) stepClass += ' active';
         if (isPlaying) stepClass += ' playing';
         if (hasP) stepClass += ' has-locks';
-        
+
         return `
             <div class="step-container">
                 <div class="lock-buttons">
@@ -273,6 +314,120 @@ function generateStepsHTML(track) {
             </div>
         `;
     }).join('');
+}
+
+function generateSynthStepsHTML(track) {
+    const scaleNotes = getScaleNoteList(track);
+    const maxIndex = Math.max(scaleNotes.length - 1, 0);
+    const totalSteps = track.stepCount || track.steps.length;
+
+    return Array.from({ length: totalSteps }).map((_, i) => {
+        const isActive = track.steps[i];
+        const velocity = track.velocities[i];
+        const condition = track.stepConditions[i];
+        const hasP = track.stepLocks[i] !== null;
+        const hasS = track.stepSlides[i];
+        const isPlaying = track.synthState?.stepIndex === i && track.synthState?.isPlaying;
+        const noteIndex = Math.min(track.noteIndices[i] || 0, maxIndex);
+        const noteValue = scaleNotes[noteIndex] ?? track.rootNote;
+        const noteLabel = midiToNoteName(noteValue);
+
+        let stepClass = 'step';
+        if (isActive) stepClass += ' active';
+        if (isPlaying) stepClass += ' playing';
+        if (hasP) stepClass += ' has-locks';
+
+        return `
+            <div class="step-container synth-step">
+                <div class="synth-note-control">
+                    <label>NOTE</label>
+                    <input type="range" class="note-knob" min="0" max="${Math.max(maxIndex, 0)}" step="1" value="${noteIndex}" data-track="${track.id}" data-step="${i}" data-note-knob="true" />
+                    <span class="note-label">${noteLabel}</span>
+                </div>
+                <div class="lock-buttons">
+                    <button class="lock-btn plock ${hasP ? 'active' : ''}" data-track="${track.id}" data-step="${i}" data-lock="p">[P]</button>
+                    <button class="lock-btn slide ${hasS ? 'active' : ''}" data-track="${track.id}" data-step="${i}" data-lock="s">[S]</button>
+                </div>
+                <div class="${stepClass}" data-track="${track.id}" data-step="${i}">
+                    <div class="velocity-bar" style="height: ${velocity * 100}%"></div>
+                    <div class="velocity-display">${Math.round(velocity * 100)}</div>
+                </div>
+                <div class="condition-label" data-track="${track.id}" data-step="${i}">${condition}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function generateSynthControls(track) {
+    const rateIndex = SEQUENCER_RATES.indexOf(track.rateMultiplier);
+    const safeRateIndex = rateIndex === -1 ? 2 : rateIndex;
+    const rootIndex = NOTE_OPTIONS.findIndex(option => option.midi === track.rootNote);
+    const fallbackRoot = NOTE_OPTIONS.findIndex(option => option.midi >= track.rootNote);
+    const safeRootIndex = rootIndex === -1 ? (fallbackRoot === -1 ? Math.floor(NOTE_MAX_INDEX / 2) : fallbackRoot) : rootIndex;
+    const rangeIndex = NOTE_OPTIONS.findIndex(option => option.midi === track.rangeStart);
+    const fallbackRange = NOTE_OPTIONS.findIndex(option => option.midi >= track.rangeStart);
+    const safeRangeIndex = rangeIndex === -1 ? (fallbackRange === -1 ? 0 : fallbackRange) : rangeIndex;
+    const destinationOptions = Object.keys(ENGINE_SPECS[track.engine]?.params || {});
+
+    return `
+        <div class="synth-controls" data-track="${track.id}">
+            <div class="synth-row">
+                <div class="synth-control">
+                    <label>STEPS (${track.stepCount})</label>
+                    <input type="range" min="1" max="${track.maxSteps}" step="1" value="${track.stepCount}" data-synth-track="${track.id}" data-synth-control="stepCount" />
+                </div>
+                <div class="synth-control">
+                    <label>RATE (${SEQUENCER_RATES[safeRateIndex]}x)</label>
+                    <input type="range" min="0" max="${SEQUENCER_RATES.length - 1}" step="1" value="${safeRateIndex}" data-synth-track="${track.id}" data-synth-control="rate" />
+                </div>
+                <div class="synth-control">
+                    <label>TRANSPOSE (${track.transpose})</label>
+                    <input type="range" min="-12" max="12" step="1" value="${track.transpose}" data-synth-track="${track.id}" data-synth-control="transpose" />
+                </div>
+            </div>
+            <div class="synth-row">
+                <div class="synth-control">
+                    <label>ROOT (${midiToNoteName(track.rootNote)})</label>
+                    <input type="range" min="0" max="${NOTE_MAX_INDEX}" step="1" value="${safeRootIndex}" data-synth-track="${track.id}" data-synth-control="root" />
+                </div>
+                <div class="synth-control">
+                    <label>RANGE (${midiToNoteName(track.rangeStart)}-${midiToNoteName(track.rangeStart + track.rangeSpan - 1)})</label>
+                    <input type="range" min="0" max="${RANGE_MAX_INDEX}" step="1" value="${Math.min(safeRangeIndex, RANGE_MAX_INDEX)}" data-synth-track="${track.id}" data-synth-control="range" />
+                </div>
+                <div class="synth-control">
+                    <label>SCALE</label>
+                    <select data-synth-track="${track.id}" data-synth-control="scale">
+                        ${SCALE_DEFINITIONS.map(scale => `<option value="${scale.id}" ${scale.id === track.scale ? 'selected' : ''}>${scale.name}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="lfo-grid">
+                ${track.lfos.map((lfo, index) => `
+                    <div class="lfo-block" data-track="${track.id}" data-lfo-index="${index}">
+                        <div class="lfo-title">LFO ${index + 1}</div>
+                        <label>DESTINATION</label>
+                        <select data-synth-track="${track.id}" data-synth-control="lfo-destination" data-lfo-index="${index}">
+                            <option value="none" ${lfo.destination === 'none' ? 'selected' : ''}>NONE</option>
+                            <option value="transpose" ${lfo.destination === 'transpose' ? 'selected' : ''}>TRANSPOSE</option>
+                            ${destinationOptions.map(param => `
+                                <option value="${param}" ${lfo.destination === param ? 'selected' : ''}>${param.toUpperCase()}</option>
+                            `).join('')}
+                        </select>
+                        <label>WAVE</label>
+                        <select data-synth-track="${track.id}" data-synth-control="lfo-wave" data-lfo-index="${index}">
+                            ${LFO_WAVES.map(wave => `
+                                <option value="${wave}" ${lfo.wave === wave ? 'selected' : ''}>${wave.replace('_', ' ').toUpperCase()}</option>
+                            `).join('')}
+                        </select>
+                        <label>DEPTH (${lfo.depth.toFixed(2)})</label>
+                        <input type="range" min="0" max="1" step="0.01" value="${lfo.depth}" data-synth-track="${track.id}" data-synth-control="lfo-depth" data-lfo-index="${index}" />
+                        <label>RATE (${lfo.rate.toFixed(2)}Hz)</label>
+                        <input type="range" min="0.05" max="8" step="0.05" value="${lfo.rate}" data-synth-track="${track.id}" data-synth-control="lfo-rate" data-lfo-index="${index}" />
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 export function renderSidePanel() {
@@ -517,17 +672,21 @@ function setupTrackListeners() {
         // Use a simpler approach - handle at the track level and check what was clicked
         trackElement.addEventListener('click', function(e) {
             const clickedElement = e.target;
-            
+
             // If clicked element or any parent is a button, return
             if (clickedElement.closest('button')) {
                 return;
             }
-            
-            // If clicked element or any parent is a step, return  
+
+            // If clicked element or any parent is a step, return
             if (clickedElement.closest('.step')) {
                 return;
             }
-            
+
+            if (clickedElement.closest('input') || clickedElement.closest('select')) {
+                return;
+            }
+
             // If clicked on condition label, return
             if (clickedElement.classList.contains('condition-label')) {
                 return;
@@ -578,7 +737,17 @@ function setupTrackListeners() {
     setupStepListeners();
     setupLockListeners();
     setupConditionListeners();
+
+    if (!setupTrackListeners.synthBound) {
+        const panel = document.getElementById('tracks-panel');
+        if (panel) {
+            panel.addEventListener('input', handleSynthControlChange);
+            panel.addEventListener('change', handleSynthControlChange);
+        }
+        setupTrackListeners.synthBound = true;
+    }
 }
+setupTrackListeners.synthBound = false;
 
 function setupStepListeners() {
     document.querySelectorAll('.step').forEach(step => {
@@ -962,15 +1131,17 @@ function selectPattern(index) {
 }
 
 function randomizeTrackPattern(track) {
-    for (let i = 0; i < 16; i++) {
+    const total = track.stepCount || track.steps.length;
+    for (let i = 0; i < total; i++) {
         track.steps[i] = Math.random() > 0.6;
         track.velocities[i] = 0.6 + Math.random() * 0.4;
     }
 }
 
 function clearTrackPattern(track) {
-    track.steps = Array(16).fill(false);
-    track.velocities = Array(16).fill(0.8);
+    const total = track.steps.length;
+    track.steps = Array(total).fill(false);
+    track.velocities = Array(total).fill(0.8);
 }
 
 function showConditionModal(trackId, stepIndex) {
@@ -1101,6 +1272,98 @@ function setupJSONHandlers() {
         };
         reader.readAsText(file);
     });
+}
+
+function clampNoteIndices(track) {
+    const scaleNotes = getScaleNoteList(track);
+    const maxIndex = Math.max(scaleNotes.length - 1, 0);
+    track.noteIndices = track.noteIndices.map(index => Math.min(index || 0, maxIndex));
+}
+
+function handleSynthControlChange(e) {
+    const control = e.target.dataset.synthControl;
+    const isNoteKnob = e.target.dataset.noteKnob;
+    const trackId = e.target.dataset.synthTrack || e.target.dataset.track;
+    if (!control && !isNoteKnob) return;
+    const track = state.tracks[trackId];
+    if (!track || !track.isSynth) return;
+
+    let needsFullRender = false;
+
+    if (control === 'stepCount') {
+        const value = Math.max(1, Math.min(track.maxSteps, parseInt(e.target.value, 10)));
+        track.stepCount = value;
+        needsFullRender = true;
+        const label = e.target.previousElementSibling;
+        if (label) {
+            label.textContent = `STEPS (${value})`;
+        }
+    } else if (control === 'rate') {
+        const index = parseInt(e.target.value, 10);
+        track.rateMultiplier = SEQUENCER_RATES[index] || 1;
+        const label = e.target.previousElementSibling;
+        if (label) {
+            label.textContent = `RATE (${track.rateMultiplier}x)`;
+        }
+    } else if (control === 'transpose') {
+        track.transpose = parseInt(e.target.value, 10);
+        const label = e.target.previousElementSibling;
+        if (label) {
+            label.textContent = `TRANSPOSE (${track.transpose})`;
+        }
+    } else if (control === 'root') {
+        const note = NOTE_OPTIONS[parseInt(e.target.value, 10)];
+        if (note) {
+            track.rootNote = note.midi;
+            clampNoteIndices(track);
+            const label = e.target.previousElementSibling;
+            if (label) {
+                label.textContent = `ROOT (${midiToNoteName(track.rootNote)})`;
+            }
+        }
+    } else if (control === 'range') {
+        const rangeIndex = Math.min(parseInt(e.target.value, 10), RANGE_MAX_INDEX);
+        const note = NOTE_OPTIONS[rangeIndex];
+        if (note) {
+            track.rangeStart = note.midi;
+            clampNoteIndices(track);
+            const label = e.target.previousElementSibling;
+            if (label) {
+                label.textContent = `RANGE (${midiToNoteName(track.rangeStart)}-${midiToNoteName(track.rangeStart + track.rangeSpan - 1)})`;
+            }
+        }
+    } else if (control === 'scale') {
+        track.scale = e.target.value;
+        clampNoteIndices(track);
+    } else if (control && control.startsWith('lfo-')) {
+        const index = parseInt(e.target.dataset.lfoIndex, 10);
+        if (!Number.isNaN(index) && track.lfos[index]) {
+            if (control === 'lfo-destination') {
+                track.lfos[index].destination = e.target.value;
+            } else if (control === 'lfo-wave') {
+                track.lfos[index].wave = e.target.value;
+            } else if (control === 'lfo-depth') {
+                track.lfos[index].depth = parseFloat(e.target.value);
+            } else if (control === 'lfo-rate') {
+                track.lfos[index].rate = parseFloat(e.target.value);
+            }
+        }
+    }
+
+    if (isNoteKnob) {
+        const stepIndex = parseInt(e.target.dataset.step, 10);
+        if (!Number.isNaN(stepIndex)) {
+            track.noteIndices[stepIndex] = parseInt(e.target.value, 10);
+        }
+    }
+
+    if (needsFullRender) {
+        forceRenderTracks();
+    } else {
+        renderTracks();
+    }
+
+    e.stopPropagation();
 }
 
 function showFeedback(message) {
