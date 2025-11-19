@@ -1,3 +1,6 @@
+The woscillators library isn't exposing itself as `window.wosc`. Let's check what it actually exposes. Try this updated `index.html`:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,22 +18,28 @@
         woscScript.onload = function() {
             console.log('woscillators script loaded');
             
-            // Wait for wosc to actually be available on window
-            function waitForWosc() {
-                if (window.wosc) {
-                    console.log('window.wosc is ready');
-                    // Now load the main app
-                    const mainScript = document.createElement('script');
-                    mainScript.type = 'module';
-                    mainScript.src = 'js/main.js';
-                    document.body.appendChild(mainScript);
-                } else {
-                    console.log('Waiting for window.wosc...');
-                    setTimeout(waitForWosc, 100);
-                }
-            }
+            // Debug: see what's actually on window
+            console.log('Checking window for wosc-related properties...');
+            console.log('window.wosc:', window.wosc);
+            console.log('window.woscillators:', window.woscillators);
+            console.log('window.Woscillators:', window.Woscillators);
             
-            waitForWosc();
+            // Check for any properties that might be the library
+            const possibleNames = Object.keys(window).filter(key => 
+                key.toLowerCase().includes('wosc') || 
+                key.toLowerCase().includes('oscillator') ||
+                key.toLowerCase().includes('plaits')
+            );
+            console.log('Possible woscillator-related properties:', possibleNames);
+            
+            // For now, just load the main app after a short delay
+            setTimeout(() => {
+                console.log('Loading main app...');
+                const mainScript = document.createElement('script');
+                mainScript.type = 'module';
+                mainScript.src = 'js/main.js';
+                document.body.appendChild(mainScript);
+            }, 500);
         };
         woscScript.onerror = function() {
             console.error('Failed to load woscillators from lib/woscillators.min.js');
@@ -40,3 +49,6 @@
     </script>
 </body>
 </html>
+```
+
+This will show us in the console what the library is actually exposing. Once we see what it's called, we can update the code accordingly. Can you run this and tell me what shows up in the console?
