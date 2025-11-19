@@ -9,11 +9,11 @@
 <body>
     <div id="app"></div>
     <script>
-        // Load woscillators, then load main app when ready
+        // Load woscillators from local file, then load main app when ready
         const woscScript = document.createElement('script');
-        woscScript.src = 'https://unpkg.com/@vectorsize/woscillators@latest/dist/woscillators.min.js';
+        woscScript.src = 'lib/woscillators.min.js';  // Local path
         woscScript.onload = function() {
-            console.log('woscillators CDN loaded');
+            console.log('woscillators loaded from local file');
             // Now load the main app
             const mainScript = document.createElement('script');
             mainScript.type = 'module';
@@ -21,7 +21,8 @@
             document.body.appendChild(mainScript);
         };
         woscScript.onerror = function() {
-            console.error('Failed to load woscillators from CDN');
+            console.error('Failed to load woscillators from lib/woscillators.min.js');
+            console.error('Make sure the file exists in your repo!');
         };
         document.head.appendChild(woscScript);
     </script>
