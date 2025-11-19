@@ -43,7 +43,7 @@ export class DrumSynthEngine {
             this.masterGain.connect(this.audioContext.destination);
             
             // Create track gains - connect to master FX input
-            const trackIds = ['kick', 'snare', 'hihat', 'tom', 'perc', 'cymbal'];
+            const trackIds = ['kick', 'snare', 'hihat', 'tom', 'perc', 'cymbal', 'bass', 'lead'];
             trackIds.forEach(id => {
                 const gain = this.audioContext.createGain();
                 gain.gain.value = 1.0;
@@ -75,7 +75,7 @@ export class DrumSynthEngine {
         this.currentMasterFX = { ...fx };
         
         // Disconnect all track gains from current chain
-        const trackIds = ['kick', 'snare', 'hihat', 'tom', 'perc', 'cymbal'];
+        const trackIds = ['kick', 'snare', 'hihat', 'tom', 'perc', 'cymbal', 'bass', 'lead'];
         trackIds.forEach(id => {
             if (this.trackGains[id]) {
                 this.trackGains[id].disconnect();

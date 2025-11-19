@@ -16,14 +16,23 @@ export class PatternBank {
                 steps: [...track.steps],
                 velocities: [...track.velocities],
                 stepConditions: [...track.stepConditions],
-                stepLocks: track.stepLocks.map(lock => 
+                stepLocks: track.stepLocks.map(lock =>
                     lock ? {
                         engine: lock.engine,
                         params: { ...lock.params },
                         fx: { ...lock.fx }
                     } : null
                 ),
-                stepSlides: [...track.stepSlides]
+                stepSlides: [...track.stepSlides],
+                synth: track.isSynth ? {
+                    stepCount: track.stepCount,
+                    rateMultiplier: track.rateMultiplier,
+                    rootNote: track.rootNote,
+                    scale: track.scale,
+                    rangeStart: track.rangeStart,
+                    transpose: track.transpose,
+                    noteIndices: [...track.noteIndices]
+                } : null
             };
         });
         
@@ -37,17 +46,28 @@ export class PatternBank {
         Object.entries(pattern).forEach(([trackId, trackData]) => {
             const track = state.tracks[trackId];
             if (track) {
-                track.steps = [...trackData.steps];
-                track.velocities = [...trackData.velocities];
-                track.stepConditions = [...trackData.stepConditions];
-                track.stepLocks = trackData.stepLocks.map(lock => 
+                const total = track.maxSteps;
+                track.steps = Array.from({ length: total }, (_, i) => trackData.steps?.[i] || false);
+                track.velocities = Array.from({ length: total }, (_, i) => trackData.velocities?.[i] ?? 0.8);
+                track.stepConditions = Array.from({ length: total }, (_, i) => trackData.stepConditions?.[i] || '1:1');
+                track.stepLocks = Array.from({ length: total }, (_, i) => trackData.stepLocks?.[i]).map(lock =>
                     lock ? {
                         engine: lock.engine,
                         params: { ...lock.params },
                         fx: { ...lock.fx }
                     } : null
                 );
-                track.stepSlides = [...trackData.stepSlides];
+                track.stepSlides = Array.from({ length: total }, (_, i) => trackData.stepSlides?.[i] || false);
+
+                if (track.isSynth && trackData.synth) {
+                    track.stepCount = trackData.synth.stepCount || track.stepCount;
+                    track.rateMultiplier = trackData.synth.rateMultiplier || track.rateMultiplier;
+                    track.rootNote = trackData.synth.rootNote ?? track.rootNote;
+                    track.scale = trackData.synth.scale || track.scale;
+                    track.rangeStart = trackData.synth.rangeStart ?? track.rangeStart;
+                    track.transpose = trackData.synth.transpose ?? track.transpose;
+                    track.noteIndices = Array.from({ length: total }, (_, i) => trackData.synth.noteIndices?.[i] || 0);
+                }
             }
         });
         
@@ -85,8 +105,8 @@ export class PatternBank {
             
             // Clear all tracks
             Object.values(state.tracks).forEach(track => {
-                track.steps = Array(16).fill(false);
-                track.velocities = Array(16).fill(0.8);
+                track.steps = Array(track.maxSteps).fill(false);
+                track.velocities = Array(track.maxSteps).fill(0.8);
             });
             
             // Map drums to tracks
