@@ -337,7 +337,26 @@ function renderEngineSelector() {
     if (!container) return;
     
     const track = getSelectedTrack();
-    const engines = ['plaits_kick', 'plaits_snare', 'plaits_hihat', 'plaits_modal', 'plaits_fm', 'plaits_noise'];
+    
+    // All 16 Plaits engines
+    const engines = [
+        'plaits_kick',      // Engine 13
+        'plaits_snare',     // Engine 14
+        'plaits_hihat',     // Engine 15
+        'plaits_modal',     // Engine 12
+        'plaits_fm',        // Engine 2
+        'plaits_noise',     // Engine 9
+        'plaits_va',        // Engine 0 - Virtual Analog
+        'plaits_ws',        // Engine 1 - Waveshaper
+        'plaits_grain',     // Engine 3 - Granular
+        'plaits_add',       // Engine 4 - Additive
+        'plaits_wt',        // Engine 5 - Wavetable
+        'plaits_chord',     // Engine 6 - Chord
+        'plaits_vowel',     // Engine 7 - Vowel/Speech
+        'plaits_swarm',     // Engine 8 - Swarm
+        'plaits_particle',  // Engine 10 - Particle
+        'plaits_string'     // Engine 11 - String
+    ];
     
     container.innerHTML = engines.map(engineId => `
         <button class="engine-btn ${track.engine === engineId ? 'active' : ''}" data-engine="${engineId}">
