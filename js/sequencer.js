@@ -1,6 +1,6 @@
 // Sequencer module - handles playback timing and step triggering
 
-import { state } from './state.js';
+import { state } from './state-woscillators.js';
 
 export let audioEngine = null;
 export let renderCallback = null;
