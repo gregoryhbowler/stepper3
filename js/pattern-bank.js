@@ -1,6 +1,6 @@
 // Pattern bank module - manages 16 pattern slots and magic pattern loading
 
-import { state } from './state.js';
+import { state } from './state-woscillators.js';
 
 export class PatternBank {
     constructor() {
