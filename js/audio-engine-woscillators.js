@@ -1,6 +1,5 @@
 // Audio synthesis engine for drum machine - using woscillators (Plaits)
 
-import { wosc } from '@vectorsize/woscillators';
 
 export class DrumSynthEngine {
     constructor() {
