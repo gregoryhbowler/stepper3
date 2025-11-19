@@ -5,10 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>stepper</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://unpkg.com/@vectorsize/woscillators@latest/dist/woscillators.min.js"></script>
 </head>
 <body>
     <div id="app"></div>
-    <script type="module" src="js/main.js"></script>
+    <script>
+        // Load woscillators, then load main app when ready
+        const woscScript = document.createElement('script');
+        woscScript.src = 'https://unpkg.com/@vectorsize/woscillators@latest/dist/woscillators.min.js';
+        woscScript.onload = function() {
+            console.log('woscillators CDN loaded');
+            // Now load the main app
+            const mainScript = document.createElement('script');
+            mainScript.type = 'module';
+            mainScript.src = 'js/main.js';
+            document.body.appendChild(mainScript);
+        };
+        woscScript.onerror = function() {
+            console.error('Failed to load woscillators from CDN');
+        };
+        document.head.appendChild(woscScript);
+    </script>
 </body>
 </html>
