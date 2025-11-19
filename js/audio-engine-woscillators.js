@@ -21,10 +21,17 @@ export class DrumSynthEngine {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
+            // Wait for woscillators to be available
+            let attempts = 0;
+            while (!window.wosc && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
             // Load woscillators module - use window.wosc from CDN
             try {
                 if (!window.wosc) {
-                    throw new Error('wosc not found on window - CDN may not have loaded');
+                    throw new Error('wosc not found on window after waiting - CDN may have failed to load');
                 }
                 await window.wosc.loadOscillator(this.audioContext);
                 this.woscLoaded = true;
