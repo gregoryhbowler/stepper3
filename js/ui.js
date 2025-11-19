@@ -337,7 +337,7 @@ function renderEngineSelector() {
     if (!container) return;
     
     const track = getSelectedTrack();
-    const engines = ['808', 'fm', 'snare', 'noise', 'modal', 'physical', 'additive', 'fm2', 'ks', 'buchla'];
+    const engines = ['plaits_kick', 'plaits_snare', 'plaits_hihat', 'plaits_modal', 'plaits_fm', 'plaits_noise'];
     
     container.innerHTML = engines.map(engineId => `
         <button class="engine-btn ${track.engine === engineId ? 'active' : ''}" data-engine="${engineId}">
