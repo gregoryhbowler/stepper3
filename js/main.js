@@ -1,4 +1,4 @@
-// Main entry point - initializes and connects all modules
+// Main entry point - initializes and connects all modules.
 
 import { DrumSynthEngine } from './audio-engine-woscillators.js';
 import { initializeTracks, saveCompleteState, loadCompleteState, state } from './state-woscillators.js';
