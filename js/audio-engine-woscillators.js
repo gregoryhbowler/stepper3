@@ -22,11 +22,11 @@ export class DrumSynthEngine {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
         // Load woscillators module - should already be loaded by index.html
-        if (!window.wosc) {
-            throw new Error('wosc not available - woscillators failed to load');
+        if (!window.woscillators || !window.woscillators.wosc) {
+            throw new Error('woscillators not available - library failed to load');
         }
         
-        await window.wosc.loadOscillator(this.audioContext);
+        await window.woscillators.wosc.loadOscillator(this.audioContext);
         this.woscLoaded = true;
         console.log('Woscillators (Plaits) loaded successfully');
         
@@ -276,8 +276,8 @@ export class DrumSynthEngine {
         const now = startTime || ctx.currentTime;
         
         try {
-            // Create oscillator using window.wosc
-            const osc = window.wosc.createOscillator(ctx);
+            // Create oscillator using window.woscillators.wosc
+            const osc = window.woscillators.wosc.createOscillator(ctx);
             
             // Set engine (0-15 for Plaits models)
             osc.engine = params.engine || 0;
@@ -552,17 +552,17 @@ export class DrumSynthEngine {
     }
     
     // Cleanup method
-    dispose() {
-        // Clean up all active voices
-        this.activeVoices.forEach((voice, voiceId) => {
-            this.cleanupVoice(voiceId);
-        });
-        
-        // Teardown woscillators
-        if (this.woscLoaded && window.wosc) {
-            window.wosc.teardown();
-        }
+   dispose() {
+    // Clean up all active voices
+    this.activeVoices.forEach((voice, voiceId) => {
+        this.cleanupVoice(voiceId);
+    });
+    
+    // Teardown woscillators
+    if (this.woscLoaded && window.woscillators && window.woscillators.wosc) {
+        window.woscillators.wosc.teardown();
     }
+}
 }
 
 // Engine parameter specifications for Plaits engines
