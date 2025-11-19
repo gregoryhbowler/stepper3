@@ -11,14 +11,26 @@
     <script>
         // Load woscillators from local file, then load main app when ready
         const woscScript = document.createElement('script');
-        woscScript.src = 'lib/woscillators.min.js';  // Local path
+        woscScript.src = 'lib/woscillators.min.js';
         woscScript.onload = function() {
-            console.log('woscillators loaded from local file');
-            // Now load the main app
-            const mainScript = document.createElement('script');
-            mainScript.type = 'module';
-            mainScript.src = 'js/main.js';
-            document.body.appendChild(mainScript);
+            console.log('woscillators script loaded');
+            
+            // Wait for wosc to actually be available on window
+            function waitForWosc() {
+                if (window.wosc) {
+                    console.log('window.wosc is ready');
+                    // Now load the main app
+                    const mainScript = document.createElement('script');
+                    mainScript.type = 'module';
+                    mainScript.src = 'js/main.js';
+                    document.body.appendChild(mainScript);
+                } else {
+                    console.log('Waiting for window.wosc...');
+                    setTimeout(waitForWosc, 100);
+                }
+            }
+            
+            waitForWosc();
         };
         woscScript.onerror = function() {
             console.error('Failed to load woscillators from lib/woscillators.min.js');
