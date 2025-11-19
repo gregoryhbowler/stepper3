@@ -266,15 +266,18 @@ export class DrumSynthEngine {
     }
     
     // Create Plaits oscillator with parameters
-    createPlaitsVoice(params, startTime, duration) {
+    createPlaitsVoice(params, startTime, durationOverride) {
         if (!this.woscLoaded) {
             console.warn('Woscillators not loaded, cannot create voice');
             return null;
         }
-        
+
         const ctx = this.audioContext;
         const now = startTime || ctx.currentTime;
-        
+        const rawDecay = Number.isFinite(params.decay) ? params.decay : 0.5;
+        const normalizedDecay = Math.min(Math.max(rawDecay, 0), 1);
+        const voiceDuration = Math.max(durationOverride ?? normalizedDecay ?? 0.5, 0.02);
+
         try {
             // Create oscillator using window.woscillators.wosc
             const osc = window.woscillators.wosc.createOscillator(ctx);
@@ -290,12 +293,12 @@ export class DrumSynthEngine {
             osc.timbre = params.timbre || 0.5;
             osc.morph = params.morph || 0.5;
             osc.frequencyModulationAmount = params.fm || 0;
-            
+
             // Set envelope/LPG parameters
-            osc.decay = params.decay || 0.5;
+            osc.decay = normalizedDecay;
             osc.fade = params.fade || 0; // Crossfade between outputs
             osc.volume = params.volume || 0.8;
-            
+
             // Trigger behavior
             osc.modTriggerPatched = true;
             osc.modTrigger = 1; // Trigger the sound
@@ -308,24 +311,24 @@ export class DrumSynthEngine {
             const envGain = ctx.createGain();
             envGain.gain.setValueAtTime(0, now);
             envGain.gain.linearRampToValueAtTime(1, now + 0.001);
-            envGain.gain.setValueAtTime(1, now + duration * 0.7);
-            envGain.gain.linearRampToValueAtTime(0, now + duration);
-            
+            envGain.gain.setValueAtTime(1, now + voiceDuration * 0.7);
+            envGain.gain.linearRampToValueAtTime(0, now + voiceDuration);
+
             osc.connect(envGain);
-            
+
             // Start the oscillator
             osc.start(now);
-            
+
             // Store voice for cleanup
             const voiceId = `${Date.now()}-${Math.random()}`;
-            this.activeVoices.set(voiceId, { osc, envGain, stopTime: now + duration + 0.1 });
-            
+            this.activeVoices.set(voiceId, { osc, envGain, stopTime: now + voiceDuration + 0.1 });
+
             // Schedule cleanup
             setTimeout(() => {
                 this.cleanupVoice(voiceId);
-            }, (duration + 0.2) * 1000);
-            
-            return { output: envGain, stopTime: now + duration + 0.1, voiceId };
+            }, (voiceDuration + 0.2) * 1000);
+
+            return { output: envGain, stopTime: now + voiceDuration + 0.1, voiceId };
         } catch (error) {
             console.error('Failed to create Plaits voice:', error);
             return null;
@@ -370,7 +373,10 @@ export class DrumSynthEngine {
         const now = ctx.currentTime;
         
         // Create Plaits voice
-        const voice = this.createPlaitsVoice(params, now, params.decay || 0.5);
+        const rawDecay = Number.isFinite(params.decay) ? params.decay : 0.5;
+        const normalizedDecay = Math.min(Math.max(rawDecay, 0), 1);
+        const envelopeDuration = Math.max(normalizedDecay, 0.02);
+        const voice = this.createPlaitsVoice(params, now, envelopeDuration);
         
         if (!voice) {
             console.warn('Failed to create voice');
