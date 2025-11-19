@@ -657,7 +657,157 @@ export const ENGINE_SPECS = {
             volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
             engine: { label: 'Engine', min: 9, max: 9, step: 1, default: 9 }
         }
+    },
+    // Engine 0: Virtual Analog
+'plaits_va': {
+    name: 'Virtual Analog',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Waveform', min: 0, max: 1, step: 0.01, default: 0.5 },
+        timbre: { label: 'PWM/Sync', min: 0, max: 1, step: 0.01, default: 0.5 },
+        morph: { label: 'Wavefold', min: 0, max: 1, step: 0.01, default: 0.5 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.05, max: 2, step: 0.01, default: 0.5 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 0, max: 0, step: 1, default: 0 }
     }
+},
+// Engine 1: Waveshaper
+'plaits_ws': {
+    name: 'Waveshaper',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Amount', min: 0, max: 1, step: 0.01, default: 0.5 },
+        timbre: { label: 'Asymmetry', min: 0, max: 1, step: 0.01, default: 0.5 },
+        morph: { label: 'Shape', min: 0, max: 1, step: 0.01, default: 0.5 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.05, max: 2, step: 0.01, default: 0.5 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 1, max: 1, step: 1, default: 1 }
+    }
+},
+// Engine 3: Granular
+'plaits_grain': {
+    name: 'Granular',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Overlap', min: 0, max: 1, step: 0.01, default: 0.5 },
+        timbre: { label: 'Grain Size', min: 0, max: 1, step: 0.01, default: 0.5 },
+        morph: { label: 'Randomness', min: 0, max: 1, step: 0.01, default: 0.5 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.1, max: 2, step: 0.01, default: 0.8 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 3, max: 3, step: 1, default: 3 }
+    }
+},
+// Engine 4: Additive
+'plaits_add': {
+    name: 'Additive',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Harmonics', min: 0, max: 1, step: 0.01, default: 0.5 },
+        timbre: { label: 'Brightness', min: 0, max: 1, step: 0.01, default: 0.5 },
+        morph: { label: 'Detune', min: 0, max: 1, step: 0.01, default: 0 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.05, max: 2, step: 0.01, default: 0.5 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 4, max: 4, step: 1, default: 4 }
+    }
+},
+// Engine 5: Wavetable
+'plaits_wt': {
+    name: 'Wavetable',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Bank', min: 0, max: 1, step: 0.01, default: 0 },
+        timbre: { label: 'Position', min: 0, max: 1, step: 0.01, default: 0.5 },
+        morph: { label: 'Warp', min: 0, max: 1, step: 0.01, default: 0 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.05, max: 2, step: 0.01, default: 0.5 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 5, max: 5, step: 1, default: 5 }
+    }
+},
+// Engine 6: Chord
+'plaits_chord': {
+    name: 'Chord',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Chord Type', min: 0, max: 1, step: 0.01, default: 0.3 },
+        timbre: { label: 'Inversion', min: 0, max: 1, step: 0.01, default: 0.5 },
+        morph: { label: 'Waveform', min: 0, max: 1, step: 0.01, default: 0.5 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.1, max: 3, step: 0.01, default: 0.5 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 6, max: 6, step: 1, default: 6 }
+    }
+},
+// Engine 7: Vowel/Speech
+'plaits_vowel': {
+    name: 'Vowel/Speech',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Formant', min: 0, max: 1, step: 0.01, default: 0.5 },
+        timbre: { label: 'Vowel', min: 0, max: 1, step: 0.01, default: 0.5 },
+        morph: { label: 'Noise', min: 0, max: 1, step: 0.01, default: 0.2 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.05, max: 2, step: 0.01, default: 0.5 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 7, max: 7, step: 1, default: 7 }
+    }
+},
+// Engine 8: Swarm
+'plaits_swarm': {
+    name: 'Swarm',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Density', min: 0, max: 1, step: 0.01, default: 0.6 },
+        timbre: { label: 'Speed', min: 0, max: 1, step: 0.01, default: 0.4 },
+        morph: { label: 'Chaos', min: 0, max: 1, step: 0.01, default: 0.5 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.1, max: 3, step: 0.01, default: 0.7 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 8, max: 8, step: 1, default: 8 }
+    }
+},
+// Engine 10: Particle
+'plaits_particle': {
+    name: 'Particle',
+    params: {
+        note: { label: 'Note', min: 24, max: 96, step: 1, default: 48 },
+        harmonics: { label: 'Density', min: 0, max: 1, step: 0.01, default: 0.6 },
+        timbre: { label: 'Filter', min: 0, max: 1, step: 0.01, default: 0.5 },
+        morph: { label: 'Randomness', min: 0, max: 1, step: 0.01, default: 0.5 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.1, max: 2, step: 0.01, default: 0.6 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 10, max: 10, step: 1, default: 10 }
+    }
+},
+// Engine 11: String
+'plaits_string': {
+    name: 'String',
+    params: {
+        note: { label: 'Note', min: 24, max: 72, step: 1, default: 36 },
+        harmonics: { label: 'Harmonics', min: 0, max: 1, step: 0.01, default: 0.5 },
+        timbre: { label: 'Brightness', min: 0, max: 1, step: 0.01, default: 0.6 },
+        morph: { label: 'Damping', min: 0, max: 1, step: 0.01, default: 0.3 },
+        fm: { label: 'FM Amount', min: 0, max: 10, step: 0.1, default: 0 },
+        decay: { label: 'Decay', min: 0.2, max: 4, step: 0.01, default: 1.5 },
+        fade: { label: 'Fade', min: 0, max: 1, step: 0.01, default: 0 },
+        volume: { label: 'Volume', min: 0, max: 1, step: 0.01, default: 0.8 },
+        engine: { label: 'Engine', min: 11, max: 11, step: 1, default: 11 }
+    }
+}
 };
 
 export const FX_SPECS = {
