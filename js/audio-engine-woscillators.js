@@ -16,47 +16,47 @@ export class DrumSynthEngine {
     }
     
     async initialize() {
-    if (this.initialized) return;
-    
-    try {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (this.initialized) return;
         
-        // Load woscillators module - should already be loaded by index.html
-        if (!window.woscillators || !window.woscillators.wosc) {
-            throw new Error('woscillators not available - library failed to load');
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Load woscillators module - should already be loaded by index.html
+            if (!window.woscillators || !window.woscillators.wosc) {
+                throw new Error('woscillators not available - library failed to load');
+            }
+            
+            await window.woscillators.wosc.loadOscillator(this.audioContext);
+            this.woscLoaded = true;
+            console.log('Woscillators (Plaits) loaded successfully');
+            
+            // Create master gain
+            this.masterGain = this.audioContext.createGain();
+            this.masterGain.gain.value = 0.7;
+            
+            // Create master FX chain input
+            this.masterFXInput = this.audioContext.createGain();
+            this.masterFXInput.gain.value = 1.0;
+            
+            // Initial connection (will be rebuilt when FX change)
+            this.masterFXInput.connect(this.masterGain);
+            this.masterGain.connect(this.audioContext.destination);
+            
+            // Create track gains - connect to master FX input
+            const trackIds = ['kick', 'snare', 'hihat', 'tom', 'perc', 'cymbal'];
+            trackIds.forEach(id => {
+                const gain = this.audioContext.createGain();
+                gain.gain.value = 1.0;
+                gain.connect(this.masterFXInput);
+                this.trackGains[id] = gain;
+            });
+            
+            this.initialized = true;
+        } catch (error) {
+            console.error('Failed to initialize audio:', error);
+            throw error;
         }
-        
-        await window.woscillators.wosc.loadOscillator(this.audioContext);
-        this.woscLoaded = true;
-        console.log('Woscillators (Plaits) loaded successfully');
-        
-        // Create master gain
-        this.masterGain = this.audioContext.createGain();
-        this.masterGain.gain.value = 0.7;
-        
-        // Create master FX chain input
-        this.masterFXInput = this.audioContext.createGain();
-        this.masterFXInput.gain.value = 1.0;
-        
-        // Initial connection (will be rebuilt when FX change)
-        this.masterFXInput.connect(this.masterGain);
-        this.masterGain.connect(this.audioContext.destination);
-        
-        // Create track gains - connect to master FX input
-        const trackIds = ['kick', 'snare', 'hihat', 'tom', 'perc', 'cymbal'];
-        trackIds.forEach(id => {
-            const gain = this.audioContext.createGain();
-            gain.gain.value = 1.0;
-            gain.connect(this.masterFXInput);
-            this.trackGains[id] = gain;
-        });
-        
-        this.initialized = true;
-    } catch (error) {
-        console.error('Failed to initialize audio:', error);
-        throw error;
     }
-}
     
     async ensureInitialized() {
         if (!this.initialized) {
@@ -552,17 +552,17 @@ export class DrumSynthEngine {
     }
     
     // Cleanup method
-   dispose() {
-    // Clean up all active voices
-    this.activeVoices.forEach((voice, voiceId) => {
-        this.cleanupVoice(voiceId);
-    });
-    
-    // Teardown woscillators
-    if (this.woscLoaded && window.woscillators && window.woscillators.wosc) {
-        window.woscillators.wosc.teardown();
+    dispose() {
+        // Clean up all active voices
+        this.activeVoices.forEach((voice, voiceId) => {
+            this.cleanupVoice(voiceId);
+        });
+        
+        // Teardown woscillators
+        if (this.woscLoaded && window.woscillators && window.woscillators.wosc) {
+            window.woscillators.wosc.teardown();
+        }
     }
-}
 }
 
 // Engine parameter specifications for Plaits engines
