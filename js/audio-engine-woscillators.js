@@ -16,58 +16,47 @@ export class DrumSynthEngine {
     }
     
     async initialize() {
-        if (this.initialized) return;
+    if (this.initialized) return;
+    
+    try {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Wait for woscillators to be available
-            let attempts = 0;
-            while (!window.wosc && attempts < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            
-            // Load woscillators module - use window.wosc from CDN
-            try {
-                if (!window.wosc) {
-                    throw new Error('wosc not found on window after waiting - CDN may have failed to load');
-                }
-                await window.wosc.loadOscillator(this.audioContext);
-                this.woscLoaded = true;
-                console.log('Woscillators (Plaits) loaded successfully');
-            } catch (error) {
-                console.warn('Failed to load woscillators:', error);
-                this.woscLoaded = false;
-            }
-            
-            // Create master gain
-            this.masterGain = this.audioContext.createGain();
-            this.masterGain.gain.value = 0.7;
-            
-            // Create master FX chain input
-            this.masterFXInput = this.audioContext.createGain();
-            this.masterFXInput.gain.value = 1.0;
-            
-            // Initial connection (will be rebuilt when FX change)
-            this.masterFXInput.connect(this.masterGain);
-            this.masterGain.connect(this.audioContext.destination);
-            
-            // Create track gains - connect to master FX input
-            const trackIds = ['kick', 'snare', 'hihat', 'tom', 'perc', 'cymbal'];
-            trackIds.forEach(id => {
-                const gain = this.audioContext.createGain();
-                gain.gain.value = 1.0;
-                gain.connect(this.masterFXInput);
-                this.trackGains[id] = gain;
-            });
-            
-            this.initialized = true;
-        } catch (error) {
-            console.error('Failed to initialize audio:', error);
-            throw error;
+        // Load woscillators module - should already be loaded by index.html
+        if (!window.wosc) {
+            throw new Error('wosc not available - woscillators failed to load');
         }
+        
+        await window.wosc.loadOscillator(this.audioContext);
+        this.woscLoaded = true;
+        console.log('Woscillators (Plaits) loaded successfully');
+        
+        // Create master gain
+        this.masterGain = this.audioContext.createGain();
+        this.masterGain.gain.value = 0.7;
+        
+        // Create master FX chain input
+        this.masterFXInput = this.audioContext.createGain();
+        this.masterFXInput.gain.value = 1.0;
+        
+        // Initial connection (will be rebuilt when FX change)
+        this.masterFXInput.connect(this.masterGain);
+        this.masterGain.connect(this.audioContext.destination);
+        
+        // Create track gains - connect to master FX input
+        const trackIds = ['kick', 'snare', 'hihat', 'tom', 'perc', 'cymbal'];
+        trackIds.forEach(id => {
+            const gain = this.audioContext.createGain();
+            gain.gain.value = 1.0;
+            gain.connect(this.masterFXInput);
+            this.trackGains[id] = gain;
+        });
+        
+        this.initialized = true;
+    } catch (error) {
+        console.error('Failed to initialize audio:', error);
+        throw error;
     }
+}
     
     async ensureInitialized() {
         if (!this.initialized) {
