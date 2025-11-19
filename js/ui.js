@@ -1,7 +1,7 @@
 // UI module - rendering and interaction handling
 
-import { state, getSelectedTrack, setSelectedTrack } from './state.js';
-import { ENGINE_SPECS, FX_SPECS } from './audio-engine.js';
+import { state, getSelectedTrack, setSelectedTrack } from './state-woscillators.js';
+import { ENGINE_SPECS, FX_SPECS } from './audio-engine-woscillators.js';
 import { startSequencer, stopSequencer, resetSequencer, updateTempo } from './sequencer.js';
 
 export let audioEngine = null;
